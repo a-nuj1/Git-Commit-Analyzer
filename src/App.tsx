@@ -6,10 +6,10 @@ import RepositoriesList from './components/pages/RepositoriesList.tsx'
 import CommitsChart from './components/pages/CommitsChart.tsx'
 import { useGitHubData } from './hooks/useGitHubData.ts'
 
-
 function App() {
   const [username, setUsername] = useState('')
   const [submittedUsername, setSubmittedUsername] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   
   const { 
     profile, 
@@ -25,11 +25,20 @@ function App() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setSubmittedUsername(username)
-    selectRepo(null) // Reset to overall view when analyzing new user
+    selectRepo(null)
+    setCurrentPage(1) // Reset to first page when analyzing new user
   }
 
   const handleShowOverall = () => {
     selectRepo(null)
+  }
+
+  // Calculate total pages
+  const reposPerPage = 10
+  const totalPages = repos ? Math.ceil(repos.length / reposPerPage) : 0
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
   }
 
   return (
@@ -59,7 +68,7 @@ function App() {
           </div>
         )}
 
-{profile && (
+        {profile && (
           <>
             <div className="mb-6 w-full">
               <ProfileCard profile={profile} />
@@ -73,7 +82,7 @@ function App() {
                       onClick={handleShowOverall}
                       className="text-sm text-blue-600 hover:underline"
                     >
-                      Show All Commits
+                      Clear Selection
                     </button>
                   )}
                 </div>
@@ -81,15 +90,26 @@ function App() {
                   repos={repos} 
                   selectedRepo={selectedRepo}
                   onRepoSelect={selectRepo}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
                 />
               </div>
               <div>
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">Commit Activity</h2>
-                <CommitsChart 
-                  commitsData={commitsData} 
-                  repoName={selectedRepo}
-                  isOverallView={isOverallView}
-                />
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                  {selectedRepo ? `Commit Activity for ${selectedRepo}` : 'Select a repository to view commits'}
+                </h2>
+                {selectedRepo ? (
+                  <CommitsChart 
+                    commitsData={commitsData} 
+                    repoName={selectedRepo}
+                    isOverallView={isOverallView}
+                  />
+                ) : (
+                  <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+                    Click on a repository to view its commit activity
+                  </div>
+                )}
               </div>
             </div>
           </>
